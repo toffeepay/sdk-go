@@ -1,0 +1,20 @@
+version: v2
+plugins:
+  - remote: buf.build/protocolbuffers/go
+    out: internal/gen
+    opt:
+      - paths=source_relative
+      - Mpay/v1/common.proto=github.com/toffeepay/sdk-go/internal/gen/pay/v1
+      - Mpay/v1/payment.proto=github.com/toffeepay/sdk-go/internal/gen/pay/v1
+      - Mpay/v1/refund.proto=github.com/toffeepay/sdk-go/internal/gen/pay/v1
+  - remote: buf.build/connectrpc/go
+    out: internal/gen
+    opt:
+      - paths=source_relative
+      - Mpay/v1/common.proto=github.com/toffeepay/sdk-go/internal/gen/pay/v1
+      - Mpay/v1/payment.proto=github.com/toffeepay/sdk-go/internal/gen/pay/v1
+      - Mpay/v1/refund.proto=github.com/toffeepay/sdk-go/internal/gen/pay/v1
+inputs:
+  - module: buf.build/toffeepay/toffee
+    paths:
+      - pay/v1

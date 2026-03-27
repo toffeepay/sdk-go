@@ -1,0 +1,16 @@
+name: Build
+description: Build
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+        cache: true
+    - run: go build ./...
+      shell: bash
+    - run: go vet ./...
+      shell: bash
+    - run: go test ./...
+      shell: bash
