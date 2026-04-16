@@ -5,7 +5,6 @@ import (
 
 	"connectrpc.com/connect"
 
-	pb "github.com/toffeepay/sdk-go/internal/gen/pay/v1"
 	"github.com/toffeepay/sdk-go/internal/gen/pay/v1/v1connect"
 )
 
@@ -15,7 +14,7 @@ type RefundService struct {
 }
 
 // Create initiates a new refund.
-func (r *RefundService) Create(ctx context.Context, req *CreateRefundRequest, opts ...RequestOption) (*Refund, error) {
+func (r *RefundService) Create(ctx context.Context, req *CreateRefundRequest, opts ...RequestOption) (*CreateRefundResponse, error) {
 	o := applyOptions(opts)
 	cr := connect.NewRequest(req)
 	applyHeaders(cr, o)
@@ -23,16 +22,16 @@ func (r *RefundService) Create(ctx context.Context, req *CreateRefundRequest, op
 	if err != nil {
 		return nil, err
 	}
-	return resp.Msg.GetRefund(), nil
+	return resp.Msg, nil
 }
 
 // Get retrieves a refund by ID.
-func (r *RefundService) Get(ctx context.Context, id string) (*Refund, error) {
-	resp, err := r.client.GetRefund(ctx, connect.NewRequest(&pb.GetRefundRequest{Id: id}))
+func (r *RefundService) Get(ctx context.Context, req *GetRefundRequest) (*GetRefundResponse, error) {
+	resp, err := r.client.GetRefund(ctx, connect.NewRequest(req))
 	if err != nil {
 		return nil, err
 	}
-	return resp.Msg.GetRefund(), nil
+	return resp.Msg, nil
 }
 
 // List returns a paginated list of refunds.
