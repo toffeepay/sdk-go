@@ -1,8 +1,5 @@
 // Package toffee provides a Go SDK for the ToffeePay payment API.
 //
-// The SDK wraps the pay.v1 ConnectRPC services (PaymentService and RefundService)
-// with a convenient, idiomatic Go client.
-//
 // Usage:
 //
 //	client := toffee.New(toffee.Config{
@@ -13,11 +10,7 @@
 //	session, err := client.Checkout(ctx, &toffee.CreateSessionRequest{
 //	    GameId: "game-1",
 //	    UserId: "user-1",
-//	    Item: &toffee.Item{
-//	        Title:    "100 Coins",
-//	        Price:    999,
-//	        Currency: "USD",
-//	    },
+//	    Item:   &toffee.Item{Title: "100 Coins", Price: 999, Currency: "USD"},
 //	})
 package toffee
 
@@ -27,7 +20,8 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/toffeepay/sdk-go/internal/gen/pay/v1/v1connect"
+	payconnect "github.com/toffeepay/sdk-go/internal/gen/pay/v1/v1connect"
+	walletconnect "github.com/toffeepay/sdk-go/internal/gen/wallet/v1/v1connect"
 )
 
 const (
@@ -58,11 +52,13 @@ type Config struct {
 	BaseURL string
 }
 
-// Client provides access to the ToffeePay pay.v1 API.
+// Client provides access to the ToffeePay API.
 type Client struct {
 	Sessions *SessionService
 	Payments *PaymentService
 	Refunds  *RefundService
+	Accounts *AccountService
+	Deposits *DepositService
 }
 
 // New creates a new ToffeePay [Client].
@@ -86,24 +82,35 @@ func New(cfg Config) *Client {
 		connect.WithInterceptors(authInterceptor(cfg.AccessToken)),
 	}
 
-	paymentClient := v1connect.NewPaymentServiceClient(httpClient, baseURL, opts...)
-	refundClient := v1connect.NewRefundServiceClient(httpClient, baseURL, opts...)
+	paymentClient := payconnect.NewPaymentServiceClient(httpClient, baseURL, opts...)
+	refundClient := payconnect.NewRefundServiceClient(httpClient, baseURL, opts...)
+	accountClient := walletconnect.NewAccountServiceClient(httpClient, baseURL, opts...)
 
 	return &Client{
 		Sessions: &SessionService{client: paymentClient},
 		Payments: &PaymentService{client: paymentClient},
 		Refunds:  &RefundService{client: refundClient},
+		Accounts: &AccountService{client: accountClient},
+		Deposits: &DepositService{client: accountClient},
 	}
 }
 
-// Checkout is a convenience method that creates a payment session.
+// Checkout is a convenience method that creates a payment session and returns the [Session] directly.
 func (c *Client) Checkout(ctx context.Context, req *CreateSessionRequest, opts ...RequestOption) (*Session, error) {
-	return c.Sessions.Create(ctx, req, opts...)
+	resp, err := c.Sessions.Create(ctx, req, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetSession(), nil
 }
 
-// Refund is a convenience method that creates a refund.
+// Refund is a convenience method that creates a refund and returns the [Refund] directly.
 func (c *Client) Refund(ctx context.Context, req *CreateRefundRequest, opts ...RequestOption) (*Refund, error) {
-	return c.Refunds.Create(ctx, req, opts...)
+	resp, err := c.Refunds.Create(ctx, req, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetRefund(), nil
 }
 
 func authInterceptor(token string) connect.UnaryInterceptorFunc {
